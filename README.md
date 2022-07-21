@@ -10,7 +10,7 @@ This is a rather simple but memory efficient heap memory allocator for the tms99
 
 ## Known limitations & behavior:
 	* It uses a single word chunk_info header to keep track of the heap, this means that every call to malloc(size) will result in size + 2 bytes of memory being reserved.
-	* malloc(), calloc(), realloc() and free are implemented
+	* malloc(), calloc(), realloc() and free() are implemented
 	* freeing incorrect pointers will mess up the heap immediately
 	* the free() function coalesces where adjacent free chunks of memory are created to avoid too much fragmentation, but it does so in a rather inefficient way. So while malloc() is quite fast, free() can take a bit more time.
 
