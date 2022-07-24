@@ -1,15 +1,15 @@
 # Program name
 NAME=malloctest8
 LIBNAME=malloc99
-INSTALL_DIR=~/mess/mess0149-64bit/carts
 
 # Paths to TMS9900 compilation tools
-BASE_PATH=../../../tms9900/bin
+BASE_PATH=../../toolchain/tms9900/bin
 AS=$(BASE_PATH)/tms9900-as
 LD=$(BASE_PATH)/tms9900-ld
 CC=$(BASE_PATH)/tms9900-gcc
 AR=$(BASE_PATH)/tms9900-ar
-LIBTI99=../libti99
+INCLUDE_PATH=../include
+LIB_PATH=../lib
 
 
 # List of compiled objects used in executable
@@ -28,7 +28,7 @@ OBJECT_LIST= 									\
 PREREQUISITES= $(OBJECT_LIST) library
 
 # Compiler flags
-CCFLAGS= -lti99 -std=c99 -Werror -Wall -Os -s -Iinclude -I$(LIBTI99) -c
+CCFLAGS= -lti99 -std=c99 -Werror -Wall -Os -s -Iinclude -I$(INCLUDE_PATH) -c
 
 # Linker flags for flat cart binary
 # Most of this is defined in the linker script
@@ -58,9 +58,8 @@ library: $(OBJECT_LIST_LIBRARY)
 
 # Install binary files where needed
 install: all
-	@echo "\tCreating $(NAME).rpk"
-	@zip $(NAME).rpk layout.xml $(NAME).bin >> /dev/null
-	@cp $(NAME).rpk $(INSTALL_DIR)/
+	@echo "\tCopying library lib$(LIBNAME).a to $(LIB_PATH)"
+	@cp lib$(LIBNAME).a $(LIB_PATH)/
 	@echo
 
 # Recipe to clean all compiled objects

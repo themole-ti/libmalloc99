@@ -1,7 +1,7 @@
 #ifndef MALLOC_H
 #define MALLOC_H
 
-#define DEBUG_MALLOC
+#undef DEBUG_MALLOC
 #define null 0
 
 void*			malloc(unsigned int size);

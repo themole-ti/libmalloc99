@@ -6,7 +6,6 @@
 #include "malloc.h"
 #ifdef  DEBUG_MALLOC
 extern int cprintf(const char *fmt, ...);
-extern void clrscr();
 #endif
 
 #define MAX_HEAP 0xfffe
@@ -34,7 +33,7 @@ void initialize_heap()
 	for (ptr = heap_start; ptr < heap_end; ptr++)
 		*ptr = 0;
 
- 	heap_size = (((MAX_HEAP - (unsigned int)heap_start)) << 1) >> 1;
+ 	heap_size = ((((unsigned int)heap_end - (unsigned int)heap_start)) << 1) >> 1;
  	heap_free = heap_size;
 
  	chunk_info *chunk = (void*)heap_start;
@@ -128,9 +127,19 @@ void free(void* ptr)
 	{
 		chunk_info *nextchunk = get_next_chunk(chunk);
 		if ((chunk->free) && (nextchunk->free))
-		{
-			chunk->size += nextchunk->size;
-			nextchunk->size = 0;
+		{	
+			if ((void*)nextchunk != (void*)heap_end)
+			{
+				chunk->size += nextchunk->size;
+				nextchunk->size = 0;
+				chunk = get_next_chunk(chunk);
+			}
+			else
+			{
+				chunk->size = heap_end - (unsigned int*)chunk;
+				chunk = get_next_chunk(chunk);
+				chunk->size = 0;
+			}
 		}
 		else
 			chunk = get_next_chunk(chunk);

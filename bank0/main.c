@@ -8,13 +8,13 @@
 #include "malloc.h"
 
 #define SIZEOF_CHUNK_INFO 2
-#define NUM_ITERATIONS    100
+#define NUM_ITERATIONS    10
 #define VINT_COUNTER 	  *((volatile unsigned char*)0x8379)
 
 unsigned int rnd_xorshift()
 {
 	static unsigned int 	x = 1, y = 1;
-	unsigned int			t = ( x^( x<<5 ) ); 
+	unsigned int			t = ( x^( x<<5 ) );
 
 	x = y;
 
@@ -56,10 +56,10 @@ unsigned int test_malloc()
 	cprintf(".");
 
 	// Try to use all of allocated memory for one pointer
-	ptrs[1][0] = (unsigned int)0xDEADBEEF;
+	ptrs[1][0] = (unsigned int)0xDEAD;
 	for (int i = 0; i < (sizes[0]>>1); i++)
 		ptrs[0][i] = i;
-	if (ptrs[1][0] != (unsigned int)0xDEADBEEF)
+	if (ptrs[1][0] != (unsigned int)0xDEAD)
 		return -4;
 	cprintf(".");
 
