@@ -8,8 +8,10 @@
 #include "malloc.h"
 
 #define SIZEOF_CHUNK_INFO 2
-#define NUM_ITERATIONS    10
+#define NUM_ITERATIONS    350
 #define VINT_COUNTER 	  *((volatile unsigned char*)0x8379)
+
+unsigned char spinner[4] = {'-', '\\', '|', '/'};
 
 unsigned int rnd_xorshift()
 {
@@ -19,6 +21,21 @@ unsigned int rnd_xorshift()
 	x = y;
 
 	return y = ( y^( y>>1) )^( t^( t>>3 ) );
+}
+
+void shuffle(unsigned int *array, unsigned int n)
+{
+    if (n > 1) 
+    {
+        unsigned int i;
+        for (i = 0; i < n - 1; i++) 
+        {
+          unsigned int j = (i + rnd_xorshift()) % n;
+          unsigned int t = array[j];
+          array[j] = array[i];
+          array[i] = t;
+        }
+    }
 }
 
 void randomize()
@@ -39,17 +56,22 @@ unsigned int test_malloc()
 	// Assign some random size values
 	for (int i = 0; i < NUM_ITERATIONS; i++)
 	{
-		sizes[i] = (rnd_xorshift() % 128);
+		sizes[i] = (rnd_xorshift() % (total_free / NUM_ITERATIONS));
+		cputc(spinner[i % 4]); cputc('\b'); 
 	}
+	cprintf(".");
 
 	// Allocate some pointers
 	for (int i = 0; i < NUM_ITERATIONS; i++)
 	{
 		ptrs[i] = malloc(sizes[i]);
+		cputc(spinner[i % 4]); cputc('\b'); 
 	}
+	cprintf(".");
 
 	for (int i = 0; i < NUM_ITERATIONS; i++)
 	{
+		cputc(spinner[i % 4]); cputc('\b'); 
 		if (ptrs[i] == null)
 			return -1;
 	}
@@ -58,7 +80,7 @@ unsigned int test_malloc()
 	// Try to use all of allocated memory for one pointer
 	ptrs[1][0] = (unsigned int)0xDEAD;
 	for (int i = 0; i < (sizes[0]>>1); i++)
-		ptrs[0][i] = i;
+		ptrs[0][i] = 0xBEEF;
 	if (ptrs[1][0] != (unsigned int)0xDEAD)
 		return -4;
 	cprintf(".");
@@ -69,10 +91,12 @@ unsigned int test_malloc()
 	cprintf(".");
 
 	// test freeing
-	// We interleave the free calls to test coalescing
-	for (int i = 0; i < NUM_ITERATIONS; i +=2)
+	// We shuffle the ptrs array to test coalescing
+	shuffle((unsigned int*)ptrs, NUM_ITERATIONS);
+	cprintf(".");
+	for (int i = 0; i < NUM_ITERATIONS; i++)
 	{
-		free(ptrs[i + 1]);
+		cputc(spinner[i % 4]); cputc('\b'); 
 		free(ptrs[i]);
 	}
 	cprintf(".");
@@ -88,36 +112,67 @@ unsigned int test_malloc()
 
 unsigned int test_calloc()
 {
-	unsigned int total_free = get_free_heap();	
+	unsigned char* ptrs[NUM_ITERATIONS];
+	unsigned int total_free = get_free_heap();
+	unsigned int sizes[NUM_ITERATIONS];
 
-	unsigned int* ptr1 = calloc(100, sizeof(unsigned int));
-	unsigned int* ptr2 = calloc(100, sizeof(unsigned int));
-	unsigned int* ptr3 = calloc(100, sizeof(unsigned int));
-	cprintf(".");
-
-	// Put some data on heap and free the associated pointer
-	for (int i = 0; i < (100 >> 1); i++)
-		ptr2[i] = i;
-	free(ptr2);
-	cprintf(".");
-
-	// Reallocate space in free chunk with 0 initiallization
-	ptr2 = calloc(50, sizeof(unsigned int));
-	for (int i = 0; i < (50 >> 1); i++)
+	// Assign some random size values
+	for (int i = 0; i < NUM_ITERATIONS; i++)
 	{
-		// Check for zeroes
-		if (ptr2[i])
+		cputc(spinner[i % 4]); cputc('\b'); 
+		sizes[i] = (rnd_xorshift() % (total_free / NUM_ITERATIONS));
+	}
+	cprintf(".");
+
+	// Allocate some pointers
+	for (int i = 0; i < NUM_ITERATIONS; i++)
+	{
+		cputc(spinner[i % 4]); cputc('\b'); 
+		ptrs[i] = calloc(sizes[i], sizeof(unsigned char));
+	}
+	cprintf(".");
+
+	for (int i = 0; i < NUM_ITERATIONS; i++)
+	{
+		cputc(spinner[i % 4]); cputc('\b'); 
+		if (ptrs[i] == null)
 			return -1;
 	}
 	cprintf(".");
 
-	free(ptr2);
-	free(ptr3);
-	free(ptr1);
+	// Check if everything was zeroed out correctly
+	for (int i = 0; i < NUM_ITERATIONS; i++)
+	{
+		cputc(spinner[i % 4]); cputc('\b'); 
+		for (int j = 0; j < sizes[i]; j++)
+		{
+			if (ptrs[i][j])
+			{
+				return -2;
+			}
+		}
+	}
+	cprintf(".");
+
+	// Try to allocated too much memory
+	if (calloc(get_free_heap() + 20, sizeof(unsigned char)))
+		return -2;
+	cprintf(".");
+
+	// test freeing
+	// We shuffle the ptrs array to test coalescing
+	shuffle((unsigned int*)ptrs, NUM_ITERATIONS);
+	cprintf(".");
+	for (int i = 0; i < NUM_ITERATIONS; i++)
+	{
+		cputc(spinner[i % 4]); cputc('\b'); 
+		free(ptrs[i]);
+	}
+	cprintf(".");
 
 	// Check for leaked memory
 	if (total_free != get_free_heap())
-		return -4;
+		return -3;
 
 	cprintf(".");
 

@@ -92,14 +92,19 @@ void* malloc(unsigned int size)
 
 void* calloc(unsigned int count, unsigned int size)
 {
-	unsigned char* tempptr = malloc(count * size);
+	// Make sure we stay aligned to word boundaries
+	int allignedsize = count * size;
+	if (allignedsize % 2)
+		allignedsize++;
 
-	if (tempptr == 0)
+	void* tempptr = malloc(allignedsize);
+
+	if (tempptr == null)
 		return null;
 
 	// Initialize to zero
-	for (unsigned int i = 0; i < (count * size); i++)
-		tempptr[i] = 0;
+	for (unsigned int* dst = tempptr; dst < (unsigned int*)(tempptr + allignedsize); dst++)
+		*dst = 0;
 
 	return tempptr;
 }
@@ -237,7 +242,7 @@ void malloc_debug_print()
 	// iterate over the heap and print the chunks
 	unsigned int chunk_counter = 0;
 	unsigned int *ptr = heap_start;
-	while ((ptr < heap_end) && (chunk_counter < 15))
+	while ((ptr < heap_end) && (chunk_counter < 10))
 	{
 		chunk_info *chunk = (void*)ptr; 
 		cprintf(
@@ -251,7 +256,7 @@ void malloc_debug_print()
 		ptr += chunk->size;
 		chunk_counter++;
 	}
-	if (chunk_counter >= 15)
+	if (chunk_counter >= 10)
 		cprintf("|   (more chunks remaining...)        |\n");
 	cprintf("---------------------------------------\n");
 #endif
